@@ -1,0 +1,7 @@
+geopandas
+pandas
+matplotlib
+nepali-datetime
+reportlab
+Pillow
+requests
