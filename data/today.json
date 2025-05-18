@@ -1,0 +1,38 @@
+{
+  "date": "18 May 2025",
+  "last_updated": "18 May 2025, 18:07:49",
+  "map_url": "fire_reports/nepal_daily_fire_map_20250518.jpg",
+  "stats": {
+    "total_fires": 1,
+    "top_district": "ACHHAM (1 fires)",
+    "protected_areas": "Data not available",
+    "satellite": "MODIS 1km",
+    "fire_trend": {
+      "change": 0,
+      "direction": "same"
+    },
+    "weather": {
+      "condition": "Partly Cloudy",
+      "temperature": 25,
+      "humidity": 65,
+      "wind": 12,
+      "city": "Kathmandu"
+    },
+    "confidence": {
+      "average": 69,
+      "median": 71,
+      "high_confidence_pct": 19,
+      "confidence_distribution": {
+        "low": 14,
+        "medium": 531,
+        "high": 129
+      }
+    }
+  },
+  "reports": {
+    "pdf": "fire_reports/nepal_daily_fire_report_20250518.pdf",
+    "xlsx": "fire_reports/nepal_daily_fire_report_20250518.xlsx"
+  },
+  "year": 2025,
+  "archive": []
+}

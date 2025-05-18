@@ -1,0 +1,10 @@
+{
+  "average": 69,
+  "median": 71,
+  "high_confidence_pct": 19,
+  "confidence_distribution": {
+    "low": 14,
+    "medium": 531,
+    "high": 129
+  }
+}

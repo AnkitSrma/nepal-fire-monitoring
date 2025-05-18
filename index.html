@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nepal Fire Events Dashboard</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            fire: '#e25822',
+            nepal: '#0057b7',
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .hover-scale {
+      transition: transform 0.2s;
+    }
+    .hover-scale:hover {
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+  <nav class="bg-white shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-10">
+    <span class="font-bold text-nepal text-lg flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-fire" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+      </svg>
+      Nepal Fire Events
+    </span>
+    <ul class="flex space-x-6 text-sm">
+      <li><a href="#dashboard" class="hover:text-fire transition">Dashboard</a></li>
+      <li><a href="#archive" class="hover:text-fire transition">Reports</a></li>
+      <li><a href="#about" class="hover:text-fire transition">About</a></li>
+    </ul>
+  </nav>
+
+  <main class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="text-center mt-4 mb-8 fade-in">
+      <h1 class="text-2xl md:text-4xl font-bold text-nepal mb-2">Nepal Daily Fire Monitoring</h1>
+      <p class="text-gray-600 text-base md:text-lg">Explore daily fire events detected by NASA MODIS data. Last updated: <span id="last-updated-time" class="font-semibold"></span></p>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <section id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <!-- Map Panel -->
+      <div class="md:col-span-2 bg-white rounded-lg shadow p-4 flex flex-col items-center hover-scale">
+        <h2 class="font-semibold text-lg mb-2">Today's Fire Map</h2>
+        <div class="w-full relative overflow-hidden">
+          <img id="fire-map" src="" alt="Nepal Fire Map" class="w-full max-w-2xl mx-auto" />
+        </div>
+        <div class="flex space-x-3 mt-3">
+          <button onclick="downloadMap()" class="bg-fire text-white px-4 py-2 rounded hover:bg-orange-600 transition flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Map
+          </button>
+          <button onclick="showFullMap()" class="bg-nepal text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            View Larger
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Panel -->
+      <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between hover-scale">
+        <div>
+          <h2 class="font-semibold text-lg mb-4">Today's Fire Statistics</h2>
+          <div class="bg-gray-50 rounded-lg p-3 mb-4">
+            <div class="text-center">
+              <span class="font-bold text-fire text-4xl" id="total-fires">0</span>
+              <p class="text-gray-600">Total Fires Detected</p>
+            </div>
+          </div>
+          <ul class="space-y-3 text-gray-700">
+            <li class="flex justify-between items-center border-b pb-2">
+              <span>Top District:</span>
+              <span class="font-bold" id="top-district">-</span>
+            </li>
+            <li class="flex justify-between items-center border-b pb-2">
+              <span>Fire Trend:</span>
+              <span class="font-bold" id="fire-trend">-</span>
+            </li>
+            <li class="flex justify-between items-center border-b pb-2">
+              <span>Confidence:</span>
+              <div class="text-right">
+                <div class="font-bold" id="confidence-level">-</div>
+                <div class="text-xs text-gray-600" id="confidence-detail">-</div>
+              </div>
+            </li>
+            <li class="flex justify-between items-center border-b pb-2">
+              <span>Satellite:</span>
+              <span class="font-bold" id="satellite">MODIS 1km</span>
+            </li>
+          </ul>
+        </div>
+        <div class="mt-6 flex flex-col space-y-2">
+          <a id="download-pdf-btn" href="#" download class="bg-nepal text-white px-4 py-2 rounded hover:bg-blue-800 transition flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            Download PDF Report
+          </a>
+          <a id="download-xlsx-btn" href="#" download class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Download Excel Data
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Report Archive -->
+    <section id="archive" class="mt-12 mb-12">
+      <h2 class="font-semibold text-xl mb-4 pb-2 border-b">Report Archive</h2>
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+        <input type="text" placeholder="Search by district or date..." class="border rounded px-3 py-2 w-full md:w-1/3" id="archive-search" />
+        <div class="flex space-x-2">
+          <select id="month-filter" class="border rounded px-3 py-2">
+            <option value="">All Months</option>
+          </select>
+          <button onclick="applyFilters()" class="bg-nepal text-white px-3 py-2 rounded hover:bg-blue-700 transition">Filter</button>
+        </div>
+      </div>
+      <div id="archive-list" class="space-y-2">
+        <!-- Archive items will be inserted here by JS -->
+      </div>
+      <div class="flex justify-center mt-6">
+        <button id="load-more" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition">Load More</button>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="mt-12 bg-white rounded-lg shadow p-6 mb-12">
+      <h2 class="font-semibold text-xl mb-4 pb-2 border-b">About This Project</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h3 class="font-semibold text-lg mb-2">Data Source & Methodology</h3>
+          <p class="text-gray-700 mb-4">
+            This dashboard uses NASA's Fire Information for Resource Management System (FIRMS) data, specifically from the MODIS satellite. The system automatically downloads daily fire point data, processes it through spatial analysis to identify fires within Nepal's districts and protected areas, and generates reports.
+          </p>
+          <p class="text-gray-700 mb-4">
+            The fire detection is based on thermal anomalies detected by MODIS at 1km resolution. The data is processed daily to provide up-to-date information on fire events across Nepal.
+          </p>
+          <div class="bg-gray-50 p-3 rounded">
+            <h4 class="font-semibold mb-1">Technical Process:</h4>
+            <ol class="list-decimal list-inside text-gray-700 space-y-1">
+              <li>Download MODIS fire data from NASA FIRMS</li>
+              <li>Perform spatial joins with Nepal district boundaries</li>
+              <li>Generate maps with fire locations and protected areas</li>
+              <li>Create detailed PDF and Excel reports</li>
+            </ol>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-semibold text-lg mb-2">Credits & Resources</h3>
+          <p class="text-gray-700 mb-4">
+            This project uses several open-source tools and data sources:
+          </p>
+          <ul class="space-y-2 text-gray-700">
+            <li><span class="font-semibold">Data:</span> NASA FIRMS (MODIS C6.1)</li>
+            <li><span class="font-semibold">GIS Processing:</span> GeoPandas, Matplotlib</li>
+            <li><span class="font-semibold">Reporting:</span> ReportLab, Pandas</li>
+            <li><span class="font-semibold">Web Interface:</span> HTML, Tailwind CSS</li>
+          </ul>
+          <div class="mt-4">
+            <h4 class="font-semibold mb-1">External Links:</h4>
+            <ul class="space-y-1 text-nepal">
+              <li>NASA FIRMS: firms.modaps.eosdis.nasa.gov</li>
+              <li>MODIS: modis.gsfc.nasa.gov</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t mt-12 py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="text-sm text-gray-600 mb-4 md:mb-0">
+          &copy; 2025 Nepal Fire Events Dashboard. Powered by NASA FIRMS & MODIS.
+        </div>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-500 hover:text-nepal transition">Privacy Policy</a>
+          <a href="#" class="text-gray-500 hover:text-nepal transition">Contact</a>
+          <a href="#" class="text-gray-500 hover:text-nepal transition">API</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Full Map Modal -->
+  <div id="map-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-lg" id="modal-title">Nepal Fire Map</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <img id="modal-image" src="" alt="Nepal Fire Map (Large)" class="w-full rounded" />
+      <div class="mt-4 flex justify-end">
+        <button onclick="downloadMap()" class="bg-fire text-white px-4 py-2 rounded hover:bg-orange-600 transition flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Map
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Fetch today's data from today.json
+    fetch('data/today.json')
+      .then(response => response.json())
+      .then(data => {
+        // Update last updated time
+        document.getElementById('last-updated-time').textContent = data.last_updated;
+        
+        // Update map
+        document.getElementById('fire-map').src = data.map_url;
+        document.getElementById('modal-title').textContent = `Nepal Fire Map - ${data.date}`;
+        document.getElementById('modal-image').src = data.map_url;
+        
+        // Update statistics
+        document.getElementById('total-fires').textContent = data.stats.total_fires;
+        document.getElementById('top-district').textContent = data.stats.top_district.split(" (")[0];
+        
+        // Update fire trend
+        if (data.stats.fire_trend) {
+          const trend = data.stats.fire_trend;
+          const trendEl = document.getElementById('fire-trend');
+          if (trend.direction === "up") {
+            trendEl.innerHTML = `<span class="text-red-600">↑ ${trend.change}%</span>`;
+          } else if (trend.direction === "down") {
+            trendEl.innerHTML = `<span class="text-green-600">↓ ${trend.change}%</span>`;
+          } else {
+            trendEl.textContent = "No change";
+          }
+        }
+        
+        // Update confidence level
+        if (data.stats.confidence) {
+          const confidence = data.stats.confidence;
+          document.getElementById('confidence-level').textContent = `${confidence.average}%`;
+          
+          if (confidence.high_confidence_pct) {
+            const detail = `${confidence.high_confidence_pct}% high confidence`;
+            document.getElementById('confidence-detail').textContent = detail;
+          }
+        }
+        
+        document.getElementById('satellite').textContent = data.stats.satellite;
+        
+        // Update download links
+        document.getElementById('download-pdf-btn').href = data.reports.pdf;
+        document.getElementById('download-xlsx-btn').href = data.reports.xlsx;
+      })
+      .catch(error => console.error('Error loading today.json:', error));
+    
+    // Fetch archive data
+    fetch('data/archive.json')
+      .then(response => response.json())
+      .then(data => {
+        renderArchive(data);
+        populateMonthOptions(data);
+      })
+      .catch(error => console.error('Error loading archive.json:', error));
+    
+    function renderArchive(data, filter = '') {
+      const archiveList = document.getElementById('archive-list');
+      archiveList.innerHTML = '';
+      
+      const filteredData = data.filter(item => {
+        return !filter || 
+               item.date.includes(filter) || 
+               item.district.toLowerCase().includes(filter.toLowerCase());
+      });
+      
+      filteredData.forEach(item => {
+        const dateParts = item.date.split('-');
+        const dateObj = new Date(dateParts[0], dateParts[1]-1, dateParts[2]);
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        const archiveItem = document.createElement('div');
+        archiveItem.className = 'flex flex-col md:flex-row items-start md:items-center justify-between bg-white rounded shadow px-4 py-3 hover-scale';
+        archiveItem.innerHTML = `
+          <div class="flex items-center mb-2 md:mb-0">
+            <div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
+              <span class="font-bold text-fire">1</span>
+            </div>
+            <div>
+              <span class="font-semibold">${formattedDate}</span>
+              <p class="text-sm text-gray-600">Top district: ${item.district}</p>
+            </div>
+          </div>
+          <div class="flex space-x-2 w-full md:w-auto justify-end">
+            <a href="${item.map_url}" class="text-nepal bg-blue-50 px-3 py-1 rounded hover:bg-blue-100 transition text-sm">Map</a>
+            <a href="${item.pdf}" download class="text-red-700 bg-red-50 px-3 py-1 rounded hover:bg-red-100 transition text-sm">PDF</a>
+            <a href="${item.xlsx}" download class="text-green-700 bg-green-50 px-3 py-1 rounded hover:bg-green-100 transition text-sm">Excel</a>
+          </div>
+        `;
+        
+        archiveList.appendChild(archiveItem);
+      });
+    }
+    
+    function populateMonthOptions(data) {
+      const monthFilter = document.getElementById('month-filter');
+      const months = new Set();
+      
+      data.forEach(item => {
+        const yearMonth = item.date.substring(0, 7);
+        months.add(yearMonth);
+      });
+      
+      const sortedMonths = Array.from(months).sort().reverse();
+      sortedMonths.forEach(yearMonth => {
+        const [year, month] = yearMonth.split('-');
+        const date = new Date(year, month-1, 1);
+        const monthName = date.toLocaleString('default', { month: 'long' });
+        
+        const option = document.createElement('option');
+        option.value = yearMonth;
+        option.textContent = `${monthName} ${year}`;
+        monthFilter.appendChild(option);
+      });
+    }
+    
+    // Search and filter functionality
+    function applyFilters() {
+      const searchTerm = document.getElementById('archive-search').value;
+      const monthValue = document.getElementById('month-filter').value;
+      const filterValue = searchTerm || monthValue;
+      
+      fetch('data/archive.json')
+        .then(response => response.json())
+        .then(data => renderArchive(data, filterValue))
+        .catch(error => console.error('Error loading archive.json:', error));
+    }
+    
+    document.getElementById('archive-search').addEventListener('input', applyFilters);
+    document.getElementById('month-filter').addEventListener('change', applyFilters);
+    
+    // Modal functions
+    function showFullMap() {
+      document.getElementById('map-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal() {
+      document.getElementById('map-modal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+    
+    // Download map function
+    function downloadMap() {
+      const mapUrl = document.getElementById('fire-map').src;
+      const link = document.createElement('a');
+      link.href = mapUrl;
+      link.download = mapUrl.split('/').pop();
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Load more button
+    document.getElementById('load-more').addEventListener('click', function() {
+      // In a real implementation, this would load more archive items
+      alert('Load more functionality would be implemented here');
+    });
+  </script>
+</body>
+</html>
